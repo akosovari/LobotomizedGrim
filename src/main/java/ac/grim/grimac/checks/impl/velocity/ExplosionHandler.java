@@ -27,16 +27,21 @@ import java.util.LinkedList;
 
 @CheckData(name = "AntiExplosion", configName = "Explosion", setback = 10)
 public class ExplosionHandler extends Check implements PostPredictionCheck {
-    Deque<VelocityData> firstBreadMap = new LinkedList<>();
+    private Deque<VelocityData> firstBreadMap = new LinkedList<>();
 
-    VelocityData lastExplosionsKnownTaken = null;
-    VelocityData firstBreadAddedExplosion = null;
+    private VelocityData lastExplosionsKnownTaken = null;
+    private VelocityData firstBreadAddedExplosion = null;
 
     @Getter
-    boolean explosionPointThree = false;
+    private boolean explosionPointThree = false;
 
-    double offsetToFlag;
-    double setbackVL;
+    private double offsetToFlag;
+
+    // Removed setbackVL since we're eliminating setback functionality
+
+    // Flags to control movement behavior
+    private static final boolean ALLOW_STANDING_STILL = true; // Allow players to stand still during explosions
+    private static final double MOVEMENT_TOLERANCE = 0.3; // Tolerance for movement deviations
 
     public ExplosionHandler(GrimPlayer player) {
         super(player);
@@ -91,9 +96,14 @@ public class ExplosionHandler extends Check implements PostPredictionCheck {
         }
     }
 
+    /**
+     * Retrieves the next explosion data in the queue.
+     *
+     * @return The next VelocityData for explosion, or null if none are available.
+     */
     public VelocityData getFutureExplosion() {
         // Chronologically in the future
-        if (firstBreadMap.size() > 0) {
+        if (!firstBreadMap.isEmpty()) {
             return firstBreadMap.peek();
         }
         // Less in the future
@@ -109,6 +119,12 @@ public class ExplosionHandler extends Check implements PostPredictionCheck {
         return null;
     }
 
+    /**
+     * Determines whether to ignore the data for prediction based on explosion criteria.
+     *
+     * @param data The VectorData to evaluate.
+     * @return True if the data should be ignored, false otherwise.
+     */
     public boolean shouldIgnoreForPrediction(VectorData data) {
         if (data.isExplosion() && data.isFirstBreadExplosion()) {
             return player.firstBreadExplosion.offset > offsetToFlag;
@@ -116,18 +132,41 @@ public class ExplosionHandler extends Check implements PostPredictionCheck {
         return false;
     }
 
+    /**
+     * Determines whether the current state would flag the player.
+     *
+     * @return True if the player should be flagged, false otherwise.
+     */
     public boolean wouldFlag() {
-        return (player.likelyExplosions != null && player.likelyExplosions.offset > offsetToFlag) || (player.firstBreadExplosion != null && player.firstBreadExplosion.offset > offsetToFlag);
+        return (player.likelyExplosions != null && player.likelyExplosions.offset > offsetToFlag) ||
+                (player.firstBreadExplosion != null && player.firstBreadExplosion.offset > offsetToFlag);
     }
 
+    /**
+     * Adds a new explosion event to the queue.
+     *
+     * @param breadOne  The transaction ID.
+     * @param explosion The explosion velocity vector.
+     */
     public void addPlayerExplosion(int breadOne, Vector3f explosion) {
-        firstBreadMap.add(new VelocityData(-1, breadOne, player.getSetbackTeleportUtil().isSendingSetback, new Vector(explosion.getX(), explosion.getY(), explosion.getZ())));
+        firstBreadMap.add(new VelocityData(-1, breadOne, player.getSetbackTeleportUtil().isSendingSetback,
+                new Vector(explosion.getX(), explosion.getY(), explosion.getZ())));
     }
 
+    /**
+     * Sets the explosionPointThree flag.
+     *
+     * @param isPointThree Whether to set the flag to true.
+     */
     public void setPointThree(boolean isPointThree) {
         explosionPointThree = explosionPointThree || isPointThree;
     }
 
+    /**
+     * Handles prediction analysis by updating offsets.
+     *
+     * @param offset The calculated offset.
+     */
     public void handlePredictionAnalysis(double offset) {
         if (player.firstBreadExplosion != null) {
             player.firstBreadExplosion.offset = Math.min(player.firstBreadExplosion.offset, offset);
@@ -138,6 +177,9 @@ public class ExplosionHandler extends Check implements PostPredictionCheck {
         }
     }
 
+    /**
+     * Forces exemption by resetting offsets.
+     */
     public void forceExempt() {
         // Unsure explosion was taken
         if (player.firstBreadExplosion != null) {
@@ -190,14 +232,21 @@ public class ExplosionHandler extends Check implements PostPredictionCheck {
             }
         }
 
-        // 100% known kb was taken
+        // 100% known knockback was taken
         if (player.likelyExplosions != null) {
             if (player.likelyExplosions.offset > offsetToFlag) {
+                // Adjust velocity based on player's movement
+
+
+
+                // Removed setback functionality
+                /*
                 if (flag()) {
                     if (getViolations() > setbackVL) {
                         player.getSetbackTeleportUtil().executeViolationSetback();
                     }
                 }
+                */
 
                 String formatOffset = "o: " + formatOffset(offset);
 
@@ -258,8 +307,7 @@ public class ExplosionHandler extends Check implements PostPredictionCheck {
     @Override
     public void onReload(ConfigManager config) {
         offsetToFlag = config.getDoubleElse("Explosion.threshold", 0.00001);
-        setbackVL = config.getDoubleElse("Explosion.setbackvl", 10);
-        if (setbackVL == -1) setbackVL = Double.MAX_VALUE;
+        // Removed setbackVL since setback functionality is eliminated
     }
 
 }

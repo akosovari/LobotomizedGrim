@@ -200,10 +200,10 @@ public class KnockbackHandler extends Check implements PostPredictionCheck {
             if (player.likelyKB.offset > offsetToFlag) {
                 threshold = Math.min(threshold + player.likelyKB.offset, ceiling);
                 if (player.likelyKB.isSetback) { // Don't increase violations if this velocity was setback, just teleport and resend them velocity.
-                    player.getSetbackTeleportUtil().executeViolationSetback();
+                    // player.getSetbackTeleportUtil().executeViolationSetback();
                 } else if (flag()) { // This velocity was sent by the server.
                     if (player.likelyKB.offset >= immediate || threshold >= maxAdv) {
-                        player.getSetbackTeleportUtil().executeViolationSetback();
+                        // player.getSetbackTeleportUtil().executeViolationSetback();
                     }
 
                     String formatOffset = "o: " + formatOffset(player.likelyKB.offset);
@@ -247,8 +247,8 @@ public class KnockbackHandler extends Check implements PostPredictionCheck {
         immediate = config.getDoubleElse("Knockback.immediate-setback-threshold", 0.1);
         multiplier = config.getDoubleElse("Knockback.setback-decay-multiplier", 0.999);
         ceiling = config.getDoubleElse("Knockback.max-ceiling", 4);
-        if (maxAdv < 0) maxAdv = Double.MAX_VALUE;
-        if (immediate < 0) immediate = Double.MAX_VALUE;
+        maxAdv = Double.MAX_VALUE;
+        immediate = Double.MAX_VALUE;
     }
 
 }
