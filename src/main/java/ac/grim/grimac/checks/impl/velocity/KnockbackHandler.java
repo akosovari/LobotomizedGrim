@@ -212,7 +212,7 @@ public class KnockbackHandler extends Check implements PostPredictionCheck {
                         formatOffset = "ignored knockback";
                     }
 
-                    alert(formatOffset);
+                    // alert(formatOffset);
                 } else {
                     reward();
                 }
